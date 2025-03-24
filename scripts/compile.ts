@@ -14,7 +14,7 @@ async function compileScript() {
     console.log(compileResult.snapshot) 
 
     if(compileResult.status == "error") {
-        process.exit(1);
+        process.exit(1); 
     }
 
     const hexArtifact = "build/main.compiled.json";
