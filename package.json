@@ -1,0 +1,20 @@
+{
+  "name": "simple-contract",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "compile": "ts-node ./scripts/compile.ts"
+  },
+  "dependencies": {
+    "@ton-community/func-js": "^0.9.1",
+    "@types/node": "^22.13.12",
+    "ton-core": "^0.53.0",
+    "ton-crypto": "^3.2.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2"
+  }
+}
