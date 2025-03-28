@@ -10,8 +10,8 @@ async function compileScript() {
         sources: (x) => fc.readFileSync(x).toString("utf-8")
     })
 
-    console.log(compileResult)
-    console.log(compileResult.snapshot) 
+    // console.log(compileResult)
+    // console.log(compileResult.snapshot) 
 
     if(compileResult.status == "error") {
         process.exit(1); 
