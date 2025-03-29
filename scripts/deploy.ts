@@ -2,6 +2,7 @@ import { beginCell, Cell, contractAddress, StateInit, storeStateInit, toNano } f
 import { hex } from "../build/main.compiled.json";
 import qs from "qs";
 import qrcode from "qrcode-terminal";
+import "dotenv/config"
 
 async function deployScript() {
     console.log("start deploying...")
@@ -30,15 +31,15 @@ async function deployScript() {
     const address = contractAddress(0, stateInit);
 
     console.log("contract address: " + address.toString())
-    console.log("scan QR code bellow to deploy")
+    console.log(`scan QR code bellow to deploy to ${process.env.TESTNET ? "testnet" : "mainnet"}`)
 
     // analog how work storeStateInit(stateInit)(stateInitBuilder)
     const stateInitCellCreate = beginCell().storeBit(false).storeBit(false).storeMaybeRef(codeCell).storeMaybeRef(dataCell).storeUint(0, 1).endCell();
 
     let link = 
-    'https://test.tonhub.com/transfer/' + 
+    `https://${process.env.TESTNET ? "testnet" : ""}tonhub.com/transfer/` + 
         address.toString({
-            testOnly: true,
+            testOnly: process.env.TESTNET ? true : false,
         }) + 
         "?" + 
         qs.stringify({
