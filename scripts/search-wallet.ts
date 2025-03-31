@@ -3,13 +3,16 @@ import { mnemonicNew, mnemonicToWalletKey } from "@ton/crypto"
 import fs from 'fs';
 
 // Suffixes to look for
-const endings = "RYZHA"
+const endings = "rzh".toUpperCase();
+const workerId = "1";
 async function main() {
   let i = 1;
   let j = 1;
 
+  console.log(`start search ${endings}`);
+
   while (true) {
-    console.log(`Iteration ${i++}, ${j}`);
+    console.log(`Iteration ${i++}, workerid: ${workerId}, find: ${j}`);
 
     const words = await mnemonicNew();
     const adminKeys = await mnemonicToWalletKey(words);
@@ -27,7 +30,7 @@ async function main() {
     });
 
     // Check if address ends with one of the desired suffixes
-    if (addressString.slice(-5).toUpperCase().includes(endings)) {
+    if (addressString.slice(-3).toUpperCase().includes(endings)) {
       console.log("Found address:", addressString);
       console.log("Mnemonic:", words.join(" "));
 
