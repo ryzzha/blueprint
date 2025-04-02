@@ -4,10 +4,28 @@
     slice cs = in_msg.begin_parse();
     int flags = cs~load_uint(4);
     slice sender_address = cs~load_msg_addr();
-    set_data(begin_cell().store_slice(sender_address).end_cell());
+
+    slice ds = get_data().begin_parse();
+    int counter_value = ds~load_uint(32);
+    
+    int op = in_msg_body~load_uint(32);
+
+    if(op == 1) {
+        int increment_amount = in_msg_body~load_uint(32);
+        set_data(begin_cell().store_uint(counter_value + increment_amount, 32).store_slice(sender_address).end_cell());
+    } elseif (op == 2) {
+        int decrement_amount = in_msg_body~load_uint(32);
+        set_data(begin_cell().store_uint(counter_value - decrement_amount, 32).store_slice(sender_address).end_cell());
+    }
+    else {
+        set_data(begin_cell().store_slice(sender_address).end_cell());
+    }
 }  
 
-slice get_the_latest_sender() method_id {
+(int, slice) get_contract_storage_data() method_id {
     slice ds = get_data().begin_parse();
-    return ds~load_msg_addr();
+    return (
+        ds~load_uint(32),
+        ds~load_msg_addr()
+    );
 }
