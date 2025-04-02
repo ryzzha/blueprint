@@ -13,7 +13,10 @@ async function compileScript() {
     // console.log(compileResult)
     // console.log(compileResult.snapshot) 
 
+    console.log(compileResult) 
+
     if(compileResult.status == "error") {
+        console.error("error in compile")
         process.exit(1); 
     }
 

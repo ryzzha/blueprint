@@ -3,11 +3,12 @@ import { Contract, Address, Cell, beginCell, contractAddress, ContractProvider, 
 interface MainContractConfig {
     number: number;
     address: Address;
+    owner: Address;
 }
 
 export function mainContractConfigToCell(config: MainContractConfig): Cell {
-    const { number, address } = config;
-    return beginCell().storeUint(number, 32).storeAddress(address).endCell();
+    const { number, address, owner } = config;
+    return beginCell().storeUint(number, 32).storeAddress(address).storeAddress(owner).endCell();
 }
 
 export class MainContract implements Contract {

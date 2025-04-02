@@ -7,13 +7,16 @@ import "@ton-community/test-utils";
 
 describe("main.fc contract tests", () => {
     let blockchain: Blockchain;
+    let ownerWallet: SandboxContract<TreasuryContract>;
     let senderWallet: SandboxContract<TreasuryContract>;
-    beforeEach(async () => {
+
+    beforeAll(async () => {
         console.log("===========================");
         console.log("starting...");
         blockchain = await Blockchain.create();
         console.log("test blockchain created");
 
+        ownerWallet = await blockchain.treasury("owner");
         senderWallet = await blockchain.treasury("sender");
     })
 
@@ -35,7 +38,8 @@ describe("main.fc contract tests", () => {
 
         const myContract = blockchain.openContract(MainContract.createFromConfig({
             number: 5,
-            address: initWallet.address
+            address: initWallet.address,
+            owner: ownerWallet.address,
         }, codeCell));
 
 
