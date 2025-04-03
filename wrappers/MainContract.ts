@@ -25,18 +25,6 @@ export class MainContract implements Contract {
         return new MainContract(address, init);
     }
 
-    async sendInternalMessage(
-        provider: ContractProvider,
-        sender: Sender,
-        value: bigint
-    ) {
-        await provider.internal(sender, {
-            value,
-            sendMode: SendMode.PAY_GAS_SEPARATELY,
-            body: beginCell().endCell(),
-        })
-    }
-
     async sendChangeCounterMessage(
         provider: ContractProvider,
         sender: Sender,
@@ -53,11 +41,59 @@ export class MainContract implements Contract {
         })
     }
 
+    async sendDepositMessage(
+        provider: ContractProvider,
+        sender: Sender,
+        value: bigint
+    ) {
+        const msg_body = beginCell().storeUint(3,32).endCell();
+        await provider.internal(sender, {
+            value,
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: msg_body,
+        })
+    }
+
+    async sendNoCodeDepositMessage(
+        provider: ContractProvider,
+        sender: Sender,
+        value: bigint
+    ) {
+        const msg_body = beginCell().endCell();
+        await provider.internal(sender, {
+            value,
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: msg_body,
+        })
+    }
+
+    async sendWithdrawMessage(
+        provider: ContractProvider,
+        sender: Sender,
+        value: bigint,
+        amount: bigint
+    ) {
+        const msg_body = beginCell().storeUint(4,32).storeCoins(amount).endCell();
+        await provider.internal(sender, {
+            value,
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: msg_body,
+        })
+    }
+
     async getData(provider: ContractProvider) {
         const { stack } = await provider.get("get_contract_storage_data", []);
         return {
             number: stack.readNumber(),
-            recent_sender: stack.readAddress()
+            recent_sender: stack.readAddress(),
+            owner: stack.readAddress()
+        }
+    }
+
+    async getBalance(provider: ContractProvider) {
+        const { stack } = await provider.get("balance", []);
+        return {
+            balance: stack.readNumber()
         }
     }
 }

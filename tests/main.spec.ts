@@ -1,4 +1,4 @@
-import { Cell, toNano } from "ton-core";
+import { Cell, fromNano, toNano } from "ton-core";
 import { hex } from "../build/main.compiled.json";
 import { Blockchain, SandboxContract, TreasuryContract } from "@ton-community/sandbox";
 import { MainContract } from "../wrappers/MainContract";
@@ -7,77 +7,143 @@ import "@ton-community/test-utils";
 
 describe("main.fc contract tests", () => {
     let blockchain: Blockchain;
+    let mainContract: SandboxContract<MainContract>;
     let ownerWallet: SandboxContract<TreasuryContract>;
-    let senderWallet: SandboxContract<TreasuryContract>;
+    let userWallet: SandboxContract<TreasuryContract>;
 
-    beforeAll(async () => {
-        console.log("===========================");
-        console.log("starting...");
+    beforeEach(async () => {
         blockchain = await Blockchain.create();
-        console.log("test blockchain created");
 
         ownerWallet = await blockchain.treasury("owner");
-        senderWallet = await blockchain.treasury("sender");
-    })
+        userWallet = await blockchain.treasury("user");
 
-    it("our first test", async () => {
-         // console.log("sending internal message...");
-        // const sendMessageResult = await myContract.sendInternalMessage(senderWallet.getSender(), toNano("0.05"));
-        // console.log("internal message sended");
-
-        // expect(sendMessageResult.transactions).toHaveTransaction({
-        //     from: senderWallet.address,
-        //     to: myContract.address,
-        //     success: true,
-        // });
-    }),
-    it("test counter", async () => {
         const codeCell = Cell.fromBoc(Buffer.from(hex, "hex"))[0];
 
-        const initWallet = await blockchain.treasury("initAddress");
-
-        const myContract = blockchain.openContract(MainContract.createFromConfig({
+        mainContract = blockchain.openContract(MainContract.createFromConfig({
             number: 5,
-            address: initWallet.address,
+            address: userWallet.address,
             owner: ownerWallet.address,
         }, codeCell));
+    })
 
+    it("counter", async () => {
 
-        console.log("sending increment message...");
-        const incrementMessageResult = await myContract.sendChangeCounterMessage(senderWallet.getSender(), toNano("0.01"), "increment", 6);
-        console.log("increment message sended");
-        
-        // console.log(incrementMessageResult)
+        const incrementMessageResult = await mainContract.sendChangeCounterMessage(userWallet.getSender(), toNano("0.01"), "increment", 6);
 
         expect(incrementMessageResult.transactions).toHaveTransaction({
-            from: senderWallet.address,
-            to: myContract.address,
+            from: userWallet.address,
+            to: mainContract.address,
             success: true,
         });
 
-        const { number: number_1, recent_sender: recent_sender_1 } = await myContract.getData();
+        const { number: number_1, recent_sender: recent_sender_1 } = await mainContract.getData();
 
         expect(number_1).toEqual(11);
-        expect(recent_sender_1).toEqualAddress(senderWallet.address);
+        expect(recent_sender_1).toEqualAddress(userWallet.address);
 
-        console.log("sending decrement message...");
-        const decrementMessageResult = await myContract.sendChangeCounterMessage(senderWallet.getSender(), toNano("0.01"), "decrement", 3);
-        console.log("decrement message sended");
-        
-        // console.log(decrementMessageResult)
+        const decrementMessageResult = await mainContract.sendChangeCounterMessage(userWallet.getSender(), toNano("0.01"), "decrement", 3);
 
         expect(decrementMessageResult.transactions).toHaveTransaction({
-            from: senderWallet.address,
-            to: myContract.address,
+            from: userWallet.address,
+            to: mainContract.address,
             success: true,
         });
 
-        const { number: number_2, recent_sender: recent_sender_2 } = await myContract.getData();
+        const { number: number_2, recent_sender: recent_sender_2 } = await mainContract.getData();
 
         expect(number_2).toEqual(8);
-        expect(recent_sender_2).toEqualAddress(senderWallet.address);
+        expect(recent_sender_2).toEqualAddress(userWallet.address);
+    })
 
-        console.log("end");
+    it("succesfully deposit funds", async () => {
+        const senderWallet = await blockchain.treasury("sender");
 
+        const depositMessageResult = await mainContract.sendDepositMessage(senderWallet.getSender(), toNano("10"));
+
+        expect(depositMessageResult.transactions).toHaveTransaction({
+            from: senderWallet.address,
+            to: mainContract.address,
+            success: true,
+        });
+
+        const { balance } = await mainContract.getBalance();
+
+        expect(balance).toBeGreaterThanOrEqual(toNano("9.99"));
+    })
+
+    it("should return deposit funds if no command is send", async () => {
+        const senderWallet = await blockchain.treasury("sender");
+
+        const depositMessageResult = await mainContract.sendNoCodeDepositMessage(senderWallet.getSender(), toNano("10"));
+
+        expect(depositMessageResult.transactions).toHaveTransaction({
+            from: senderWallet.address,
+            to: mainContract.address,
+            success: false,
+        });
+
+        const { balance } = await mainContract.getBalance();
+
+        expect(balance).toBe(0);
+    })
+
+    it("succesfully withdraw funds if you are owner", async () => {
+        const senderWallet = await blockchain.treasury("sender");
+
+        const depositMessageResult = await mainContract.sendDepositMessage(senderWallet.getSender(), toNano("10"));
+
+        expect(depositMessageResult.transactions).toHaveTransaction({
+            from: senderWallet.address,
+            to: mainContract.address,
+            success: true,
+        });
+
+        const withdrawMessageResult = await mainContract.sendWithdrawMessage(ownerWallet.getSender(), toNano("0.01"), toNano("7"));
+
+        expect(withdrawMessageResult.transactions).toHaveTransaction({
+            from: ownerWallet.address,
+            to: mainContract.address,
+            success: true,
+        });
+
+        expect(withdrawMessageResult.transactions).toHaveTransaction({
+            from: mainContract.address,
+            to: ownerWallet.address,
+            success: true,
+            value: toNano("7")
+        });
+    })
+
+    it("fails to withdraw funds if you are not owner", async () => {
+        const senderWallet = await blockchain.treasury("sender");
+
+        const depositMessageResult = await mainContract.sendDepositMessage(senderWallet.getSender(), toNano("10"));
+
+        expect(depositMessageResult.transactions).toHaveTransaction({
+            from: senderWallet.address,
+            to: mainContract.address,
+            success: true,
+            value: toNano("10")
+        });
+
+        const withdrawMessageResult = await mainContract.sendWithdrawMessage(senderWallet.getSender(), toNano("0.01"), toNano("7"));
+
+        expect(withdrawMessageResult.transactions).toHaveTransaction({
+            from: senderWallet.address,
+            to: mainContract.address,
+            success: false,
+            exitCode: 103
+        });
+    })
+
+    it("fails to withdraw funds because lack of balance", async () => {
+        const withdrawMessageResult = await mainContract.sendWithdrawMessage(ownerWallet.getSender(), toNano("0.01"), toNano("5"));
+
+        expect(withdrawMessageResult.transactions).toHaveTransaction({
+            from: ownerWallet.address,
+            to: mainContract.address,
+            success: false,
+            exitCode: 104
+        });
     })
 }) 
