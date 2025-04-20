@@ -25,6 +25,18 @@ export class MainContract implements Contract {
         return new MainContract(address, init);
     }
 
+    async sendDeploy(
+        provider: ContractProvider,
+        sender: Sender,
+        value: bigint
+    ) {
+        await provider.internal(sender, {
+            value,
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: beginCell().storeUint(3,32).endCell()
+        })
+    }
+
     async sendChangeCounterMessage(
         provider: ContractProvider,
         sender: Sender,

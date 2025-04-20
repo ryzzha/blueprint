@@ -7,12 +7,7 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "compile": "ts-node ./scripts/compile.ts",
     "test": "npx jest",
-    "deploy": "TESTNET=true npm run compile && ts-node ./scripts/deploy.ts",
-    "deploy:mainnet": "npm run compile && ts-node ./scripts/deploy.ts",
-    "onchaintest": "TESTNET=true ts-node ./scripts/onchaintest.ts",
-    "onchaintest:mainnet": "ts-node ./scripts/onchaintest.ts",
     "search-wallet": "ts-node ./scripts/search-wallet.ts"
   },
   "dependencies": {

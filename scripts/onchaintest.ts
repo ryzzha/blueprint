@@ -31,8 +31,6 @@ async function onchainTestScript() {
     return;
    }
 
-   console.log("contract address: " + address)
-
    let link = 
     `https://${process.env.TESTNET ? "testnet" : ""}tonhub.com/transfer/` + 
         address.toString({
@@ -47,8 +45,6 @@ async function onchainTestScript() {
         qrcode.generate(link, { small: true }, (code) => {
         console.log(code);
     });
-
-    console.log("link: " + link)
 
     let last_sender: Address;
 
